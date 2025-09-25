@@ -16,6 +16,24 @@ TinyPG provides a clean Python API for creating temporary PostgreSQL databases f
 - **Good dev UX**: Context managers and pytest fixtures & works seamlessly with your existing code (SQLAlchemy, async ...)
 - **(Optional) Supports compiling postgres from sources**: if you're not comfortable pulling prebuilt binaries from the internet
 
+## Installation
+
+You can install TinyPG from PyPI using your preferred Python packaging tool:
+
+```bash
+# Using pip
+pip install tinypg
+
+# Using uv
+uv pip install tinypg
+```
+
+The package provides optional extras for asynchronous drivers and development
+tooling. For example, to install the async dependencies with uv:
+
+```bash
+uv pip install "tinypg[async]"
+```
 
 ## Quick Start
 
@@ -65,7 +83,7 @@ TinyPG is currently only test and optimized for Linux development environments.
 This currently focus on creating ephemeral PostgresSQL databases for test scenarios, but it could also be used
 to use PostgresSQL as an "embedded" database just like you would use SQLite (except you get Postgres instead!).
 
-I also have yet to publish it to PyPi. I created it initially to run python tests using postgres without having to install it and I have also used it to provide a local PostgresSQL database for a GUI app.
+TinyPG is currently primarily tested on Linux, but contributions that improve support on other platforms are welcome. The project started as a way to run PostgreSQL-backed test suites without installing Postgres globally and can also power local development environments that need an "embedded" PostgreSQL instance.
 
 ## License
 
