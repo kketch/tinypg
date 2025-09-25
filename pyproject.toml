@@ -41,10 +41,13 @@ dev = [
 async = [
     "asyncpg>=0.29.0",
 ]
+docs = [
+    "pdoc>=14.4",
+]
 
 [project.urls]
 Homepage = "https://github.com/kketch/tinypg"
-Documentation = "https://github.com/kketch/tinypg/docs"
+Documentation = "https://python-tinypg.readthedocs.io"
 Repository = "https://github.com/kketch/tinypg"
 
 [tool.setuptools.packages.find]
@@ -66,6 +69,10 @@ python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.pdoc]
+modules = ["tinypg"]
+docformat = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -62,6 +62,12 @@ finally:
 - Python 3.8+
 - PostgreSQL source compilation tools (if binaries need to be built)
 
+## Documentation / API Reference
+
+TinyPG's documentation is available there:
+[docs](https://python-tinypg.readthedocs.io/en/latest/)
+
+
 ## Architecture
 
 TinyPG consists of several key components:
@@ -71,10 +77,6 @@ TinyPG consists of several key components:
 - **Port Management**: Handles TCP port allocation
 - **Context Managers**: Provides clean Python APIs
 - **Configuration**: Flexible configuration management
-
-## API Reference
-
-Coming soon
 
 ## Development Status
 
