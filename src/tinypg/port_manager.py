@@ -9,9 +9,9 @@ from typing import Optional
 def get_free_port() -> int:
     """
     Get an unused TCP port.
-    
+
     Python implementation of getsocket.c functionality.
-    
+
     Returns:
         int: An available TCP port number
     """
@@ -28,11 +28,11 @@ def get_free_port() -> int:
 def is_port_available(port: int, host: str = "127.0.0.1") -> bool:
     """
     Check if a port is available for binding.
-    
+
     Args:
         port: Port number to check
         host: Host to check (default: 127.0.0.1)
-        
+
     Returns:
         bool: True if port is available, False otherwise
     """
@@ -46,15 +46,17 @@ def is_port_available(port: int, host: str = "127.0.0.1") -> bool:
         sock.close()
 
 
-def find_port_in_range(start_port: int, end_port: int, host: str = "127.0.0.1") -> Optional[int]:
+def find_port_in_range(
+    start_port: int, end_port: int, host: str = "127.0.0.1"
+) -> Optional[int]:
     """
     Find an available port in a given range.
-    
+
     Args:
         start_port: Start of port range (inclusive)
         end_port: End of port range (inclusive)
         host: Host to check (default: 127.0.0.1)
-        
+
     Returns:
         Optional[int]: Available port number, or None if no port is available
     """
