@@ -1,5 +1,4 @@
 """
-[![Klv1Zcx.md.png](https://iili.io/Klv1Zcx.md.png)](https://freeimage.host/i/Klv1Zcx)
 
 TinyPG: Ephemeral PostgreSQL databases for Python development and testing.
 
