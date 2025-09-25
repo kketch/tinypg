@@ -1,6 +1,4 @@
-"""
-Context manager interfaces for TinyPG.
-"""
+"""Context manager interfaces for TinyPG."""
 
 import asyncio
 from contextlib import asynccontextmanager, contextmanager
@@ -17,24 +15,32 @@ def database(
     version: str = None,
     keep_data: bool = False,
 ) -> ContextManager[str]:
-    """
-    Context manager that yields a database URI.
+    """Yield a temporary PostgreSQL database URI.
 
     Args:
-        port: TCP port for the database (auto-assigned if None)
-        timeout: Seconds before automatic cleanup
-        postgres_args: Additional arguments to pass to postgres server
-        version: PostgreSQL version to use
-        keep_data: Keep data directory after stopping
+        port: TCP port for the database. When ``None`` a free port is
+            allocated automatically.
+        timeout: Seconds before the database is stopped automatically. Use
+            ``0`` to keep it running indefinitely.
+        postgres_args: Extra arguments passed to the ``postgres`` server
+            process.
+        version: PostgreSQL version identifier. Defaults to the
+            ``tinypg.config.TinyPGConfig`` value when ``None``.
+        keep_data: When ``True`` the data directory is preserved after the
+            database stops. Useful for debugging failed test runs.
 
     Yields:
-        str: PostgreSQL connection URI
+        str: PostgreSQL connection URI for the running database instance.
 
     Example:
+        ```python
+        import psycopg2
+        import tinypg
+
         with tinypg.database() as uri:
             conn = psycopg2.connect(uri)
-            # Use database...
-        # Database automatically cleaned up
+            conn.close()
+        ```
     """
     db = EphemeralDB(
         port=port,
@@ -59,24 +65,32 @@ async def async_database(
     version: str = None,
     keep_data: bool = False,
 ) -> AsyncContextManager[str]:
-    """
-    Async context manager that yields a database URI.
+    """Asynchronously yield a temporary PostgreSQL database URI.
 
     Args:
-        port: TCP port for the database (auto-assigned if None)
-        timeout: Seconds before automatic cleanup
-        postgres_args: Additional arguments to pass to postgres server
-        version: PostgreSQL version to use
-        keep_data: Keep data directory after stopping
+        port: TCP port for the database. When ``None`` a free port is
+            allocated automatically.
+        timeout: Seconds before the database is stopped automatically. Use
+            ``0`` to keep it running indefinitely.
+        postgres_args: Extra arguments passed to the ``postgres`` server
+            process.
+        version: PostgreSQL version identifier. Defaults to the
+            ``tinypg.config.TinyPGConfig`` value when ``None``.
+        keep_data: When ``True`` the data directory is preserved after the
+            database stops. Useful for debugging failed test runs.
 
     Yields:
-        str: PostgreSQL connection URI
+        str: PostgreSQL connection URI for the running database instance.
 
     Example:
+        ```python
+        import asyncpg
+        import tinypg
+
         async with tinypg.async_database() as uri:
             conn = await asyncpg.connect(uri)
-            # Use database...
-        # Database automatically cleaned up
+            await conn.close()
+        ```
     """
     db = AsyncEphemeralDB(
         port=port,
@@ -100,24 +114,30 @@ def database_pool(
     version: str = None,
     base_port: Optional[int] = None,
 ) -> ContextManager[List[str]]:
-    """
-    Context manager that yields multiple database URIs.
+    """Create a pool of independent PostgreSQL databases.
 
     Args:
-        pool_size: Number of databases to create
-        timeout: Seconds before automatic cleanup
-        version: PostgreSQL version to use
-        base_port: Base port number (will use base_port, base_port+1, etc.)
+        pool_size: Number of database instances to start.
+        timeout: Seconds before each database is stopped automatically. Use
+            ``0`` to disable automatic cleanup.
+        version: PostgreSQL version identifier. Defaults to the
+            ``tinypg.config.TinyPGConfig`` value when ``None``.
+        base_port: Base port number. When provided, ports are allocated as
+            ``base_port + i``.
 
     Yields:
-        List[str]: List of PostgreSQL connection URIs
+        list[str]: Connection URIs for the running databases.
 
     Example:
+        ```python
+        import psycopg2
+        import tinypg
+
         with tinypg.database_pool(3) as uris:
-            # uris is a list of 3 database connection strings
-            for uri in uris:
-                conn = psycopg2.connect(uri)
-                # Use each database...
+            connections = [psycopg2.connect(uri) for uri in uris]
+            for conn in connections:
+                conn.close()
+        ```
     """
     databases = []
     uris = []
@@ -155,23 +175,31 @@ async def async_database_pool(
     version: str = None,
     base_port: Optional[int] = None,
 ) -> AsyncContextManager[List[str]]:
-    """
-    Async context manager that yields multiple database URIs.
+    """Asynchronously create a pool of independent PostgreSQL databases.
 
     Args:
-        pool_size: Number of databases to create
-        timeout: Seconds before automatic cleanup
-        version: PostgreSQL version to use
-        base_port: Base port number (will use base_port, base_port+1, etc.)
+        pool_size: Number of database instances to start.
+        timeout: Seconds before each database is stopped automatically. Use
+            ``0`` to disable automatic cleanup.
+        version: PostgreSQL version identifier. Defaults to the
+            ``tinypg.config.TinyPGConfig`` value when ``None``.
+        base_port: Base port number. When provided, ports are allocated as
+            ``base_port + i``.
 
     Yields:
-        List[str]: List of PostgreSQL connection URIs
+        list[str]: Connection URIs for the running databases.
 
     Example:
+        ```python
+        import asyncpg
+        import tinypg
+
         async with tinypg.async_database_pool(3) as uris:
-            # uris is a list of 3 database connection strings
-            tasks = [asyncpg.connect(uri) for uri in uris]
-            connections = await asyncio.gather(*tasks)
+            connections = await asyncio.gather(
+                *(asyncpg.connect(uri) for uri in uris)
+            )
+            await asyncio.gather(*(conn.close() for conn in connections))
+        ```
     """
     databases = []
     uris = []
