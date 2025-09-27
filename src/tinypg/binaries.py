@@ -48,6 +48,7 @@ class PostgreSQLBinaries:
         # Detect platform
         self.os_name = self._detect_os()
         self.arch = self._detect_arch()
+        self._using_musl = self._detect_musl()
 
     def _detect_os(self) -> str:
         """Detect the operating system."""
@@ -82,9 +83,8 @@ class PostgreSQLBinaries:
         """Get the platform string for binary downloads."""
         platform = f"{self.os_name}-{self.arch}"
 
-        # TODO not returning alpine yet for testing
-        # if False and self.os_name == "linux" and self._using_musl:
-        #   return f"{platform}-alpine"
+        if self.os_name == "linux" and self._using_musl:
+            return f"{platform}-alpine"
 
         return platform
 
@@ -94,7 +94,11 @@ class PostgreSQLBinaries:
             return False
 
         libc, _ = platform.libc_ver()
-        if libc and libc.lower().startswith("musl"):
+        force_glibc = bool(os.environ.get("TINYPG_GLIBC"))
+        if libc and libc.lower().startswith("musl") and not force_glibc:
+            # Will use a musl build unless TINYPG_GLIBC=1
+            # tinypg glibc binaries works on alpine (extensions as well)
+            # with gcompat
             return True
 
         if Path("/etc/alpine-release").exists():
