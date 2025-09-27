@@ -79,6 +79,36 @@ finally:
     db.stop()
 ```
 
+## Development
+
+TinyPG uses [uv](https://docs.astral.sh/uv/) to manage its virtual environment
+and development tooling. To contribute to the project locally:
+
+1. Install uv (see the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)).
+2. Create the virtual environment and install all extras plus development
+   dependencies:
+
+   ```bash
+   uv sync --all-extras --dev
+   ```
+
+   This command creates a project-local `.venv/` directory that contains every
+   dependency required by the test suite and linters.
+
+3. Run the test suite through uv to ensure the managed environment is used:
+
+   ```bash
+   uv run pytest
+   ```
+
+4. The continuous integration workflow also runs formatting checks. Reproduce
+   them locally with:
+
+   ```bash
+   uv run black --check .
+   uv run isort --check-only .
+   ```
+
 ## Requirements
 
 - Python 3.8+

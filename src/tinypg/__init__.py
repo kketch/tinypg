@@ -161,7 +161,7 @@ TinyPG's github repository is available there:
 
 from .config import TinyPGConfig
 from .context import async_database, database, database_pool
-from .core import AsyncEphemeralDB, EphemeralDB
+from .core import AsyncEphemeralDB, EphemeralDB, PersistentDB
 from .exceptions import (
     BinaryNotFoundError,
     DatabaseStartError,
@@ -181,6 +181,7 @@ __version__ = "0.2.0"
 __all__ = [
     "EphemeralDB",
     "AsyncEphemeralDB",
+    "PersistentDB",
     "ExtensionSpec",
     "ExtensionManifest",
     "get_available_extension",

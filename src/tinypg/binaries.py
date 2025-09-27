@@ -80,7 +80,37 @@ class PostgreSQLBinaries:
 
     def _get_platform_string(self) -> str:
         """Get the platform string for binary downloads."""
-        return f"{self.os_name}-{self.arch}"
+        platform = f"{self.os_name}-{self.arch}"
+
+        # TODO not returning alpine yet for testing
+        # if False and self.os_name == "linux" and self._using_musl:
+        #   return f"{platform}-alpine"
+
+        return platform
+
+    def _detect_musl(self) -> bool:
+        """Return ``True`` when running on a musl-based libc such as Alpine."""
+        if self.os_name != "linux":
+            return False
+
+        libc, _ = platform.libc_ver()
+        if libc and libc.lower().startswith("musl"):
+            return True
+
+        if Path("/etc/alpine-release").exists():
+            return True
+
+        try:
+            result = subprocess.run(
+                ["ldd", "--version"], capture_output=True, text=True, check=False
+            )
+            combined_output = f"{result.stdout}\n{result.stderr}".lower()
+            if "musl" in combined_output:
+                return True
+        except FileNotFoundError:
+            pass
+
+        return False
 
     @classmethod
     def ensure_version(cls, version: str) -> Path:
