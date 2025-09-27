@@ -1,6 +1,4 @@
-"""
-Core ephemeral database implementation.
-"""
+"""Core ephemeral database implementation."""
 
 import asyncio
 import getpass
@@ -11,7 +9,10 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Sequence, Union
+
+if TYPE_CHECKING:
+    from psycopg2.sql import Composable
 from urllib.parse import quote
 
 from .binaries import PostgreSQLBinaries
@@ -22,6 +23,7 @@ from .exceptions import (
     InitDBError,
     ProcessError,
 )
+from .extensions import ExtensionInput, ExtensionManifest, ExtensionSpec
 from .port_manager import get_free_port
 
 
@@ -36,6 +38,7 @@ class EphemeralDB:
         data_dir: Optional[Path] = None,
         version: str = None,
         keep_data: bool = False,
+        extensions: Optional[Sequence[ExtensionInput]] = None,
     ) -> None:
         """
         Create an ephemeral PostgreSQL database.
@@ -47,12 +50,18 @@ class EphemeralDB:
             data_dir: Custom data directory (temp dir if None)
             version: PostgreSQL version to use (uses default if None)
             keep_data: Keep data directory after stopping (for debugging)
+            extensions: Extensions to install after the server starts. Items
+                can be provided as strings (extension name), mappings with
+                optional ``schema``, ``version`` and ``cascade`` keys, or
+                :class:`tinypg.ExtensionSpec`/:class:`tinypg.ExtensionManifest`
+                instances.
         """
         self.port = port
         self.cleanup_timeout = cleanup_timeout
         self.postgres_args = postgres_args or []
         self.version = version or TinyPGConfig.default_version
         self.keep_data = keep_data
+        self._extensions = self._normalize_extensions(extensions)
 
         # Runtime state
         self._data_dir: Optional[Path] = data_dir
@@ -90,11 +99,14 @@ class EphemeralDB:
             # Start PostgreSQL server
             self._start_postgres_server()
 
+            self._is_running = True
+
+            # Install requested extensions
+            self._install_extensions()
+
             # Set up automatic cleanup
             if self.cleanup_timeout > 0:
                 self._setup_cleanup()
-
-            self._is_running = True
 
             # Cache connection info
             self._connection_info = self._build_connection_info()
@@ -162,7 +174,7 @@ class EphemeralDB:
 
         return self._connection_info
 
-    def execute_sql(self, sql: str) -> None:
+    def execute_sql(self, statement: Union[str, "Composable"]) -> None:
         """Execute SQL directly on the database."""
         if not self._is_running:
             raise DatabaseStartError("Database is not running")
@@ -189,12 +201,47 @@ class EphemeralDB:
             conn.autocommit = True
 
             with conn.cursor() as cur:
-                cur.execute(sql)
+                cur.execute(statement)
 
             conn.close()
 
         except psycopg2.Error as e:
             raise ProcessError(f"Failed to execute SQL: {e}")
+
+    def install_extension(self, extension: ExtensionInput) -> None:
+        """Install a PostgreSQL extension on the running database."""
+
+        if not self._is_running:
+            raise DatabaseStartError("Database is not running")
+
+        spec = ExtensionSpec.from_value(extension)
+        self.execute_sql(spec.to_sql())
+
+    def create_extension(self, extension: ExtensionInput) -> None:
+        """Alias for :meth:`install_extension` to mirror SQL semantics."""
+
+        self.install_extension(extension)
+
+    def install_extensions(self, extensions: Iterable[ExtensionInput]) -> None:
+        """Install multiple PostgreSQL extensions on the running database."""
+
+        for extension in extensions:
+            self.install_extension(extension)
+
+    def _normalize_extensions(
+        self, extensions: Optional[Sequence[ExtensionInput]]
+    ) -> List[ExtensionSpec]:
+        """Normalize extension specifications provided by the user."""
+
+        if not extensions:
+            return []
+
+        normalized: List[ExtensionSpec] = []
+
+        for extension in extensions:
+            normalized.append(ExtensionSpec.from_value(extension))
+
+        return normalized
 
     def load_sql_file(self, file_path: Path) -> None:
         """Load and execute SQL from a file."""
@@ -264,6 +311,15 @@ log_disconnections = on
 
         with open(config_file, "a") as f:
             f.write(config_additions)
+
+    def _install_extensions(self) -> None:
+        """Install user-requested extensions on the running database."""
+
+        if not self._extensions:
+            return
+
+        for extension in self._extensions:
+            self.execute_sql(extension.to_sql())
 
     def _start_postgres_server(self) -> None:
         """Start the PostgreSQL server process."""
@@ -395,10 +451,27 @@ class AsyncEphemeralDB(EphemeralDB):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, super().stop)
 
-    async def execute_sql(self, sql: str) -> None:
+    async def execute_sql(self, statement: Union[str, "Composable"]) -> None:
         """Execute SQL asynchronously."""
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, super().execute_sql, sql)
+        await loop.run_in_executor(None, super().execute_sql, statement)
+
+    async def install_extension(self, extension: ExtensionInput) -> None:
+        """Install a PostgreSQL extension asynchronously."""
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, super().install_extension, extension)
+
+    async def create_extension(self, extension: ExtensionInput) -> None:
+        """Async alias for :meth:`install_extension`."""
+
+        await self.install_extension(extension)
+
+    async def install_extensions(self, extensions: Iterable[ExtensionInput]) -> None:
+        """Install multiple PostgreSQL extensions asynchronously."""
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, super().install_extensions, extensions)
 
     async def __aenter__(self):
         """Async context manager entry."""

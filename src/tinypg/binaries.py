@@ -11,12 +11,13 @@ import tarfile
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import requests
 
 from .config import TinyPGConfig
 from .exceptions import BinaryNotFoundError, DownloadError, ProcessError
+from .extensions import ExtensionManifest
 
 
 class PostgreSQLBinaries:
@@ -163,6 +164,41 @@ class PostgreSQLBinaries:
                 versions.append(version)
 
         return versions
+
+    @classmethod
+    def list_extension_manifests(
+        cls, version: Optional[str] = None
+    ) -> Dict[str, ExtensionManifest]:
+        """List extension manifests available for an installed PostgreSQL version."""
+
+        version = version or TinyPGConfig.default_version
+        install_dir = cls.ensure_version(version)
+        share_dir_candidates = [
+            install_dir / "share" / "extension",
+            install_dir / "share" / "postgresql" / "extension",
+        ]
+
+        share_dir = next((path for path in share_dir_candidates if path.exists()), None)
+
+        if share_dir is None:
+            return {}
+
+        manifests: Dict[str, ExtensionManifest] = {}
+
+        for control_path in sorted(share_dir.glob("*.control")):
+            manifest = cls._build_extension_manifest(install_dir, control_path)
+            manifests[manifest.name] = manifest
+
+        return manifests
+
+    @classmethod
+    def get_extension_manifest(
+        cls, name: str, version: Optional[str] = None
+    ) -> Optional[ExtensionManifest]:
+        """Return the manifest for a specific extension if available."""
+
+        manifests = cls.list_extension_manifests(version=version)
+        return manifests.get(name)
 
     def download_postgresql(self, version: str, force: bool = False) -> Path:
         """
@@ -370,6 +406,142 @@ class PostgreSQLBinaries:
                 raise BinaryNotFoundError(f"Binary {binary} not found in installation")
 
         print(f"PostgreSQL installation verified at {install_dir}")
+
+    @staticmethod
+    def _build_extension_manifest(
+        install_dir: Path, control_path: Path
+    ) -> ExtensionManifest:
+        metadata = PostgreSQLBinaries._parse_extension_control(control_path)
+        name = control_path.stem
+        requires = PostgreSQLBinaries._coerce_requires(metadata.get("requires"))
+        relocatable = PostgreSQLBinaries._coerce_bool(metadata.get("relocatable"))
+        schema = (
+            metadata.get("schema") if isinstance(metadata.get("schema"), str) else None
+        )
+
+        sql_directory = control_path.parent if control_path.parent.exists() else None
+        available_versions = PostgreSQLBinaries._discover_extension_versions(
+            sql_directory, name
+        )
+
+        module_pathname = metadata.get("module_pathname")
+        library_path = PostgreSQLBinaries._resolve_library_path(
+            install_dir, module_pathname, name
+        )
+
+        comment = (
+            metadata.get("comment")
+            if isinstance(metadata.get("comment"), str)
+            else None
+        )
+        default_version = (
+            metadata.get("default_version")
+            if isinstance(metadata.get("default_version"), str)
+            else None
+        )
+
+        return ExtensionManifest(
+            name=name,
+            default_version=default_version,
+            comment=comment,
+            relocatable=relocatable,
+            requires=requires,
+            control_path=control_path,
+            sql_directory=sql_directory,
+            library_path=library_path,
+            available_versions=available_versions,
+            schema=schema,
+        )
+
+    @staticmethod
+    def _parse_extension_control(control_path: Path) -> Dict[str, object]:
+        metadata: Dict[str, object] = {}
+
+        with control_path.open("r", encoding="utf-8") as fh:
+            for raw_line in fh:
+                line = raw_line.strip()
+
+                if not line or line.startswith("#"):
+                    continue
+
+                if "=" not in line:
+                    continue
+
+                key, raw_value = [part.strip() for part in line.split("=", 1)]
+                metadata[key] = PostgreSQLBinaries._normalize_control_value(raw_value)
+
+        return metadata
+
+    @staticmethod
+    def _normalize_control_value(raw_value: str) -> object:
+        value = raw_value
+
+        if value.startswith("'") and value.endswith("'"):
+            value = value[1:-1]
+
+        lowered = value.lower()
+        if lowered == "true":
+            return True
+        if lowered == "false":
+            return False
+
+        return value
+
+    @staticmethod
+    def _coerce_bool(value: object) -> Optional[bool]:
+        if isinstance(value, bool):
+            return value
+        return None
+
+    @staticmethod
+    def _coerce_requires(value: object) -> Tuple[str, ...]:
+        if isinstance(value, str):
+            parts = [part.strip() for part in value.split(",")]
+            return tuple(sorted(part for part in parts if part))
+        return ()
+
+    @staticmethod
+    def _discover_extension_versions(
+        sql_directory: Optional[Path], name: str
+    ) -> Tuple[str, ...]:
+        if not sql_directory or not sql_directory.exists():
+            return ()
+
+        versions = set()
+
+        for sql_file in sql_directory.glob(f"{name}--*.sql"):
+            stem = sql_file.stem
+            if "--" not in stem:
+                continue
+            versions.add(stem.split("--", 1)[1])
+
+        return tuple(sorted(versions))
+
+    @staticmethod
+    def _resolve_library_path(
+        install_dir: Path, module_pathname: Optional[object], name: str
+    ) -> Optional[Path]:
+        libdir = install_dir / "lib" / "postgresql"
+
+        if not libdir.exists():
+            return None
+
+        if isinstance(module_pathname, str):
+            path = module_pathname.strip()
+
+            if path.startswith("$libdir"):
+                relative = path[len("$libdir") :].lstrip("/")
+                candidate = libdir / (relative or f"{name}.so")
+            else:
+                candidate = Path(path)
+                if not candidate.is_absolute():
+                    candidate = (install_dir / candidate).resolve()
+
+            if candidate.exists():
+                return candidate
+
+        candidate = libdir / f"{name}.so"
+        return candidate if candidate.exists() else None
 
 
 # Legacy class for compatibility

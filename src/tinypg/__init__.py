@@ -76,12 +76,22 @@ from .exceptions import (
     DownloadError,
     TinyPGError,
 )
+from .extensions import (
+    ExtensionManifest,
+    ExtensionSpec,
+    get_available_extension,
+    list_available_extensions,
+)
 
 __version__ = "0.1.0"
 
 __all__ = [
     "EphemeralDB",
     "AsyncEphemeralDB",
+    "ExtensionSpec",
+    "ExtensionManifest",
+    "get_available_extension",
+    "list_available_extensions",
     "database",
     "async_database",
     "database_pool",
