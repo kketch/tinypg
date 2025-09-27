@@ -144,7 +144,7 @@ the toolchain includes `pg_config` in a future release.
 Building extensions requires a standard C compiler toolchain, development
 headers, and network access to fetch dependency archives. These prerequisites
 are available on most Linux distributions. This process is currently unsupported
-as the trimmed down postgres distribution tinypg uses does not have pg_config 
+as the trimmed down postgres distribution tinypg uses does not have pg_config
 or postgres dev headers avaialble.
 
 ## Requirements
