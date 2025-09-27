@@ -40,3 +40,43 @@ jobs:
         run: |
           uv run --python ${{ matrix.python-version }} black --check .
           uv run --python ${{ matrix.python-version }} isort --check-only .
+
+  test-osx:
+    name: macOS Python 3.12
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run tests
+        run: uv run --python 3.12 pytest
+
+  test-windows:
+    name: Windows Python 3.12
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run tests
+        run: uv run --python 3.12 pytest

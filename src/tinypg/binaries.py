@@ -22,6 +22,9 @@ from .exceptions import BinaryNotFoundError, DownloadError, ProcessError
 class PostgreSQLBinaries:
     """Manages PostgreSQL binary installation and versioning."""
 
+    PLATFORM = platform.machine().lower()
+    SYSTEM = platform.system().lower()
+
     # PostgreSQL versions supported (from pg-embed)
     SUPPORTED_VERSIONS = {
         "17": "17.2.0",
@@ -50,7 +53,7 @@ class PostgreSQLBinaries:
 
     def _detect_os(self) -> str:
         """Detect the operating system."""
-        system = platform.system().lower()
+        system = self.SYSTEM
         if system == "darwin":
             return "darwin"
         elif system == "windows":
@@ -63,7 +66,7 @@ class PostgreSQLBinaries:
 
     def _detect_arch(self) -> str:
         """Detect the CPU architecture."""
-        machine = platform.machine().lower()
+        machine = self.PLATFORM
         if machine in ["x86_64", "amd64"]:
             return "amd64"
         elif machine in ["i386", "i686"]:
@@ -80,6 +83,17 @@ class PostgreSQLBinaries:
     def _get_platform_string(self) -> str:
         """Get the platform string for binary downloads."""
         return f"{self.os_name}-{self.arch}"
+
+    @staticmethod
+    def _get_binary_path(
+        manager: "PostgreSQLBinaries", version: str, binary_name: str
+    ) -> str:
+        install_dir = manager._get_install_dir(version)
+        binary_path = install_dir / "bin" / binary_name
+
+        if manager.SYSTEM == "windows":
+            binary_path = binary_path.with_suffix(".exe")
+        return binary_path
 
     @classmethod
     def ensure_version(cls, version: str) -> Path:
@@ -142,9 +156,7 @@ class PostgreSQLBinaries:
             return Path(system_binary)
 
         # Check our installation
-        install_dir = manager._get_install_dir(version)
-        binary_path = install_dir / "bin" / binary_name
-
+        binary_path = cls._get_binary_path(manager, version, binary_name)
         if binary_path.exists() and os.access(binary_path, os.X_OK):
             return binary_path
 
@@ -311,8 +323,8 @@ class PostgreSQLBinaries:
         install_dir = self._get_install_dir(version)
 
         # Check if all required binaries exist
-        for binary in self.REQUIRED_BINARIES:
-            binary_path = install_dir / "bin" / binary
+        for binary_name in self.REQUIRED_BINARIES:
+            binary_path = self._get_binary_path(self, version, binary_name)
             if not (binary_path.exists() and os.access(binary_path, os.X_OK)):
                 return False
 
@@ -366,6 +378,9 @@ class PostgreSQLBinaries:
 
         for binary in self.REQUIRED_BINARIES:
             binary_path = bin_dir / binary
+            if self.SYSTEM == "windows":
+                binary_path = binary_path.with_suffix(".exe")
+
             if not (binary_path.exists() and os.access(binary_path, os.X_OK)):
                 raise BinaryNotFoundError(f"Binary {binary} not found in installation")
 

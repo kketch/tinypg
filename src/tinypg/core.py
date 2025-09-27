@@ -18,7 +18,6 @@ from .binaries import PostgreSQLBinaries
 from .config import TinyPGConfig
 from .exceptions import (
     DatabaseStartError,
-    DatabaseTimeoutError,
     InitDBError,
     ProcessError,
 )
@@ -210,8 +209,13 @@ class EphemeralDB:
     def _initialize_database(self) -> Path:
         """Initialize a new PostgreSQL database cluster."""
         # Create temporary directory
-        self._temp_dir = tempfile.mkdtemp(prefix="tinypg.")
-        temp_path = Path(self._temp_dir)
+        is_windows = PostgreSQLBinaries.SYSTEM == "windows"
+        sep = "-" if is_windows else "."
+        if is_windows:
+            temp_path = Path(tempfile.gettempdir()) / sep / tempfile.gettempprefix()
+        else:
+            self._temp_dir = tempfile.mkdtemp(prefix=f"tinypg{sep}")
+            temp_path = Path(self._temp_dir)
 
         # Data directory for this PostgreSQL version
         data_dir = temp_path / self.version
@@ -233,7 +237,7 @@ class EphemeralDB:
                 ],
                 check=True,
                 capture_output=True,
-                cwd=temp_path,
+                cwd=None if is_windows else temp_path,
             )
 
             # Configure PostgreSQL for ephemeral use

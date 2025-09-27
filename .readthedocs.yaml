@@ -6,4 +6,4 @@ build:
     python: "3.12"
   commands:
     - pip install .[docs]
-    - python -m pdoc --docformat google --output-directory $READTHEDOCS_OUTPUT/html tinypg
+    - python -m pdoc --docformat google --output-directory $READTHEDOCS_OUTPUT/html --logo https://iili.io/Klv1Zcx.md.png tinypg

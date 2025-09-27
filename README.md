@@ -1,5 +1,5 @@
 
-[![Klv1Zcx.md.png](https://iili.io/Klv1Zcx.md.png)](https://freeimage.host/i/Klv1Zcx)
+![logo](https://iili.io/Klv1Zcx.md.png)
 
 # TinyPG
 
@@ -9,7 +9,7 @@ A Python package for creating ephemeral PostgreSQL databases, inspired by [ephem
 
 TinyPG provides a clean Python API for creating temporary PostgreSQL databases for development and testing. It's designed to be self-contained and work without requiring system-wide PostgreSQL installation.
 
-**Currently only tested on linux, but should work on OSX and Windows hopefully**
+**Works on Linux, OSX and Windows**
 
 ## Features
 
