@@ -1,0 +1,43 @@
+name: Alpine Python 3.12
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test-alpine:
+    name: Alpine Python 3.12
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-alpine
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Install system dependencies
+        run: |
+          apk update
+          apk add --no-cache \
+            bash \
+            curl \
+            git \
+            build-base \
+            postgresql-dev \
+            libffi-dev \
+            openssl-dev \
+            linux-headers \
+            gcompat \
+            tzdata
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run tests
+        run: uv run --python 3.12 pytest -vv
