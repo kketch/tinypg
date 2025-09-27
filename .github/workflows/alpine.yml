@@ -27,6 +27,7 @@ jobs:
             libffi-dev \
             openssl-dev \
             linux-headers \
+            gcompat \
             tzdata
 
       - name: Checkout repository
