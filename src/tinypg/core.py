@@ -697,9 +697,7 @@ class PersistentDB(EphemeralDB):
 
         socket_root = TinyPGConfig.get_temp_dir() / "tinypg" / "sockets"
         socket_key = f"{name}-{version}-{persistent_root}"
-        socket_id = hashlib.sha256(socket_key.encode("utf-8")).hexdigest()[
-            :8
-        ]
+        socket_id = hashlib.sha256(socket_key.encode("utf-8")).hexdigest()[:8]
         self._socket_dir = socket_root / socket_id
 
         self._ensure_directory_owner(self._socket_dir, mode=0o755)
