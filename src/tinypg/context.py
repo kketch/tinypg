@@ -2,9 +2,10 @@
 
 import asyncio
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncContextManager, ContextManager, List, Optional
+from typing import AsyncContextManager, ContextManager, Dict, List, Optional, Sequence
 
 from .core import AsyncEphemeralDB, EphemeralDB
+from .extensions import ExtensionInput
 
 
 @contextmanager
@@ -14,6 +15,7 @@ def database(
     postgres_args: Optional[List[str]] = None,
     version: str = None,
     keep_data: bool = False,
+    extensions: Optional[Sequence[ExtensionInput]] = None,
 ) -> ContextManager[str]:
     """Yield a temporary PostgreSQL database URI.
 
@@ -28,6 +30,9 @@ def database(
             ``tinypg.config.TinyPGConfig`` value when ``None``.
         keep_data: When ``True`` the data directory is preserved after the
             database stops. Useful for debugging failed test runs.
+        extensions: Optional collection of extensions to install immediately
+            after the server starts. Entries can be provided in any format
+            accepted by :class:`tinypg.ExtensionSpec`.
 
     Yields:
         str: PostgreSQL connection URI for the running database instance.
@@ -48,6 +53,7 @@ def database(
         postgres_args=postgres_args,
         version=version,
         keep_data=keep_data,
+        extensions=extensions,
     )
 
     try:
@@ -64,6 +70,7 @@ async def async_database(
     postgres_args: Optional[List[str]] = None,
     version: str = None,
     keep_data: bool = False,
+    extensions: Optional[Sequence[ExtensionInput]] = None,
 ) -> AsyncContextManager[str]:
     """Asynchronously yield a temporary PostgreSQL database URI.
 
@@ -78,6 +85,9 @@ async def async_database(
             ``tinypg.config.TinyPGConfig`` value when ``None``.
         keep_data: When ``True`` the data directory is preserved after the
             database stops. Useful for debugging failed test runs.
+        extensions: Optional collection of extensions to install immediately
+            after the server starts. Entries can be provided in any format
+            accepted by :class:`tinypg.ExtensionSpec`.
 
     Yields:
         str: PostgreSQL connection URI for the running database instance.
@@ -98,6 +108,7 @@ async def async_database(
         postgres_args=postgres_args,
         version=version,
         keep_data=keep_data,
+        extensions=extensions,
     )
 
     try:
@@ -113,6 +124,7 @@ def database_pool(
     timeout: int = 60,
     version: str = None,
     base_port: Optional[int] = None,
+    extensions: Optional[Sequence[ExtensionInput]] = None,
 ) -> ContextManager[List[str]]:
     """Create a pool of independent PostgreSQL databases.
 
@@ -124,6 +136,9 @@ def database_pool(
             ``tinypg.config.TinyPGConfig`` value when ``None``.
         base_port: Base port number. When provided, ports are allocated as
             ``base_port + i``.
+        extensions: Optional collection of extensions to install immediately
+            after each server starts. Entries can be provided in any format
+            accepted by :class:`tinypg.ExtensionSpec`.
 
     Yields:
         list[str]: Connection URIs for the running databases.
@@ -150,6 +165,7 @@ def database_pool(
                 port=port,
                 cleanup_timeout=timeout,
                 version=version,
+                extensions=extensions,
             )
 
             uri = db.start()
@@ -174,6 +190,7 @@ async def async_database_pool(
     timeout: int = 60,
     version: str = None,
     base_port: Optional[int] = None,
+    extensions: Optional[Sequence[ExtensionInput]] = None,
 ) -> AsyncContextManager[List[str]]:
     """Asynchronously create a pool of independent PostgreSQL databases.
 
@@ -185,6 +202,9 @@ async def async_database_pool(
             ``tinypg.config.TinyPGConfig`` value when ``None``.
         base_port: Base port number. When provided, ports are allocated as
             ``base_port + i``.
+        extensions: Optional collection of extensions to install immediately
+            after each server starts. Entries can be provided in any format
+            accepted by :class:`tinypg.ExtensionSpec`.
 
     Yields:
         list[str]: Connection URIs for the running databases.

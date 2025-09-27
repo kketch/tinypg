@@ -54,6 +54,99 @@ finally:
     db.stop()
 ```
 
+## Extensions
+
+TinyPG downloads the same portable PostgreSQL builds that ship with the
+`pg-embed` project and exposes metadata about every extension included with the
+distribution. Use :func:`tinypg.list_available_extensions` or
+:func:`tinypg.get_available_extension` to inspect this catalog at runtime. The
+default PostgreSQL 15 bundle currently includes the following extensions:
+
+| Extension | Default version | Available versions |
+| --- | --- | --- |
+| `adminpack` | 2.1 | 1.0, 1.0--1.1, 1.1--2.0, 2.0--2.1 |
+| `amcheck` | 1.3 | 1.0, 1.0--1.1, 1.1--1.2, 1.2--1.3 |
+| `autoinc` | 1.0 | 1.0 |
+| `bloom` | 1.0 | 1.0 |
+| `bool_plperl` | 1.0 | 1.0 |
+| `bool_plperlu` | 1.0 | 1.0 |
+| `btree_gin` | 1.3 | 1.0, 1.0--1.1, 1.1--1.2, 1.2--1.3 |
+| `btree_gist` | 1.7 | 1.0--1.1, 1.1--1.2, 1.2, 1.2--1.3, 1.3--1.4, 1.4--1.5, 1.5--1.6, 1.6--1.7 |
+| `citext` | 1.6 | 1.0--1.1, 1.1--1.2, 1.2--1.3, 1.3--1.4, 1.4, 1.4--1.5, 1.5--1.6 |
+| `cube` | 1.5 | 1.0--1.1, 1.1--1.2, 1.2, 1.2--1.3, 1.3--1.4, 1.4--1.5 |
+| `dblink` | 1.2 | 1.0--1.1, 1.1--1.2, 1.2 |
+| `dict_int` | 1.0 | 1.0 |
+| `dict_xsyn` | 1.0 | 1.0 |
+| `earthdistance` | 1.1 | 1.0--1.1, 1.1 |
+| `file_fdw` | 1.0 | 1.0 |
+| `fuzzystrmatch` | 1.1 | 1.0--1.1, 1.1 |
+| `hstore` | 1.8 | 1.1--1.2, 1.2--1.3, 1.3--1.4, 1.4, 1.4--1.5, 1.5--1.6, 1.6--1.7, 1.7--1.8 |
+| `hstore_plperl` | 1.0 | 1.0 |
+| `hstore_plperlu` | 1.0 | 1.0 |
+| `hstore_plpython3u` | 1.0 | 1.0 |
+| `insert_username` | 1.0 | 1.0 |
+| `intagg` | 1.1 | 1.0--1.1, 1.1 |
+| `intarray` | 1.5 | 1.0--1.1, 1.1--1.2, 1.2, 1.2--1.3, 1.3--1.4, 1.4--1.5 |
+| `isn` | 1.2 | 1.0--1.1, 1.1, 1.1--1.2 |
+| `jsonb_plperl` | 1.0 | 1.0 |
+| `jsonb_plperlu` | 1.0 | 1.0 |
+| `jsonb_plpython3u` | 1.0 | 1.0 |
+| `lo` | 1.1 | 1.0--1.1, 1.1 |
+| `ltree` | 1.2 | 1.0--1.1, 1.1, 1.1--1.2 |
+| `ltree_plpython3u` | 1.0 | 1.0 |
+| `moddatetime` | 1.0 | 1.0 |
+| `old_snapshot` | 1.0 | 1.0 |
+| `pageinspect` | 1.11 | 1.0--1.1, 1.1--1.2, 1.10--1.11, 1.2--1.3, 1.3--1.4, 1.4--1.5, 1.5, 1.5--1.6, 1.6--1.7, 1.7--1.8, 1.8--1.9, 1.9--1.10 |
+| `pg_buffercache` | 1.3 | 1.0--1.1, 1.1--1.2, 1.2, 1.2--1.3 |
+| `pg_freespacemap` | 1.2 | 1.0--1.1, 1.1, 1.1--1.2 |
+| `pg_prewarm` | 1.2 | 1.0--1.1, 1.1, 1.1--1.2 |
+| `pg_stat_statements` | 1.10 | 1.0--1.1, 1.1--1.2, 1.2--1.3, 1.3--1.4, 1.4, 1.4--1.5, 1.5--1.6, 1.6--1.7, 1.7--1.8, 1.8--1.9, 1.9--1.10 |
+| `pg_surgery` | 1.0 | 1.0 |
+| `pg_trgm` | 1.6 | 1.0--1.1, 1.1--1.2, 1.2--1.3, 1.3, 1.3--1.4, 1.4--1.5, 1.5--1.6 |
+| `pg_visibility` | 1.2 | 1.0--1.1, 1.1, 1.1--1.2 |
+| `pg_walinspect` | 1.0 | 1.0 |
+| `pgcrypto` | 1.3 | 1.0--1.1, 1.1--1.2, 1.2--1.3, 1.3 |
+| `pgrowlocks` | 1.2 | 1.0--1.1, 1.1--1.2, 1.2 |
+| `pgstattuple` | 1.5 | 1.0--1.1, 1.1--1.2, 1.2--1.3, 1.3--1.4, 1.4, 1.4--1.5 |
+| `plperl` | 1.0 | 1.0 |
+| `plperlu` | 1.0 | 1.0 |
+| `plpgsql` | 1.0 | 1.0 |
+| `plpython3u` | 1.0 | 1.0 |
+| `pltcl` | 1.0 | 1.0 |
+| `pltclu` | 1.0 | 1.0 |
+| `postgres_fdw` | 1.1 | 1.0, 1.0--1.1 |
+| `refint` | 1.0 | 1.0 |
+| `seg` | 1.4 | 1.0--1.1, 1.1, 1.1--1.2, 1.2--1.3, 1.3--1.4 |
+| `sslinfo` | 1.2 | 1.0--1.1, 1.1--1.2, 1.2 |
+| `tablefunc` | 1.0 | 1.0 |
+| `tcn` | 1.0 | 1.0 |
+| `tsm_system_rows` | 1.0 | 1.0 |
+| `tsm_system_time` | 1.0 | 1.0 |
+| `unaccent` | 1.1 | 1.0--1.1, 1.1 |
+| `uuid-ossp` | 1.1 | 1.0--1.1, 1.1 |
+| `xml2` | 1.1 | 1.0--1.1, 1.1 |
+
+Third-party extensions such as `pgvector`, `pg_tle`, or `pgmq` are not packaged
+with the official binaries yet. Adding additional
+extension in the future could be possible so these ecosystems can be supported once the
+project provides a portable installation workflow for them.
+
+### Can I use other postgres extensions?
+
+Not yet no. It's possible but it isn't supported yet.
+
+At the moment the portable PostgreSQL builds bundled with TinyPG do not expose
+the `pg_config` utility that PGXN requires, so the helper exits with a clear
+error explaining that third-party compilation is not yet possible. This script
+still serves as a reference point for the command sequence and will succeed once
+the toolchain includes `pg_config` in a future release.
+
+Building extensions requires a standard C compiler toolchain, development
+headers, and network access to fetch dependency archives. These prerequisites
+are available on most Linux distributions. This process is currently unsupported
+as the trimmed down postgres distribution tinypg uses does not have pg_config
+or postgres dev headers avaialble.
+
 ## Requirements
 
 - Python 3.8+
@@ -76,12 +169,22 @@ from .exceptions import (
     DownloadError,
     TinyPGError,
 )
+from .extensions import (
+    ExtensionManifest,
+    ExtensionSpec,
+    get_available_extension,
+    list_available_extensions,
+)
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "EphemeralDB",
     "AsyncEphemeralDB",
+    "ExtensionSpec",
+    "ExtensionManifest",
+    "get_available_extension",
+    "list_available_extensions",
     "database",
     "async_database",
     "database_pool",
