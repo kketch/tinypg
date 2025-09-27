@@ -157,19 +157,13 @@ default PostgreSQL 15 bundle currently includes the following extensions:
 | `xml2` | 1.1 | 1.0--1.1, 1.1 |
 
 Third-party extensions such as `pgvector`, `pg_tle`, or `pgmq` are not packaged
-with the official binaries yet. We plan to allow registering additional
-extension manifests in the future so these ecosystems can be supported once the
+with the official binaries yet. Adding additional
+extension in the future could be possible so these ecosystems can be supported once the
 project provides a portable installation workflow for them.
 
-### Experimental PGXN workflow
+### Can I use other postgres extensions?
 
-The repository bundles a helper for developers who want to experiment with
-community extensions compiled from source. After installing the
-[`pgxnclient`](https://pgxn.github.io/pgxnclient/) CLI, the script resolves the
-TinyPG toolchain and invokes `pgxn install` with the correct `pg_config`
-binary::
-
-    python scripts/pgxn_install_extension.py pgvector
+Not yet no. It's possible but it isn't supported yet.
 
 At the moment the portable PostgreSQL builds bundled with TinyPG do not expose
 the `pg_config` utility that PGXN requires, so the helper exits with a clear
@@ -179,11 +173,9 @@ the toolchain includes `pg_config` in a future release.
 
 Building extensions requires a standard C compiler toolchain, development
 headers, and network access to fetch dependency archives. These prerequisites
-are available on most Linux distributions. The process is currently unsupported
-on Windows and may require additional setup on macOS depending on your Xcode
-installation. Even when the command succeeds, the extension binaries become
-part of the shared TinyPG PostgreSQL distribution, so coordinate installations
-carefully if multiple test runs share the same cached archive.
+are available on most Linux distributions. This process is currently unsupported
+as the trimmed down postgres distribution tinypg uses does not have pg_config 
+or postgres dev headers avaialble.
 
 ## Documentation / API Reference
 
